@@ -189,9 +189,15 @@ local cpx_sz = ffi.sizeof 'complex'
 
 -- types ----------------------------------------------------------------------o
 
+--ffi.cdef [[
+--typedef struct { ssz_t nr, nc; double  data[?]; }  matrix_t;
+--typedef struct { ssz_t nr, nc; complex data[?]; } cmatrix_t;
+--]]
+
+
 ffi.cdef [[
-typedef struct { ssz_t nr, nc; double  data[?]; }  matrix_t;
-typedef struct { ssz_t nr, nc; complex data[?]; } cmatrix_t;
+typedef struct  matrix { int32_t nr, nc; double  data[?]; }  matrix_t;
+typedef struct cmatrix { int32_t nr, nc; complex data[?]; } cmatrix_t;
 ]]
 
 local matrix_ctor  = ffi.typeof 'matrix_t'
@@ -215,6 +221,7 @@ MR.isa_vector = isa_vector
 
 -- allocators -----------------------------------------------------------------o
 
+--[[
 local function matrix_alloc (nr, nc)
   local len, mat = nr*nc, nil
   if len <= _C.mad_alloc_threshold then
@@ -242,6 +249,35 @@ local function cmatrix_alloc (nr, nc)
   mat.nr, mat.nc = nr, nc
   return mat
 end
+]]
+
+local function matrix_alloc (nr, nc)
+  local len, mat = nr*nc, nil
+  if len < _C.mad_alloc_threshold then
+    mat = matrix_ctor(len)
+  else
+    local siz = sizeof('matrix_t', len)
+    local ptr = _C.mad_malloc(siz)
+    mat = gc(cast('matrix_t&', ptr), _C.mad_free)
+    fill(mat, siz)
+  end
+  mat.nr, mat.nc = nr, nc
+  return mat
+end
+
+local function cmatrix_alloc (nr, nc)
+  local len, mat = nr*nc, nil
+  if len < (_C.mad_alloc_threshold/2) then
+    mat = cmatrix_ctor(len)
+  else
+    local siz = sizeof('cmatrix_t', len)
+    local ptr = _C.mad_malloc(siz)
+    mat = gc(cast('cmatrix_t&', ptr), _C.mad_free)
+    fill(mat, siz)
+  end
+  mat.nr, mat.nc = nr, nc
+  return mat
+end
 
 local function fromtable (ctor, tbl)
   local nr, nc = #tbl or 0, is_table(tbl[1]) and #tbl[1] or 1
@@ -250,7 +286,7 @@ local function fromtable (ctor, tbl)
 end
 
 -- constructors ---------------------------------------------------------------o
-
+--[[
 local function matrix (nr, nc_)
   if is_table(nr) then
     return fromtable(matrix_alloc, nr)
@@ -270,6 +306,30 @@ local function cmatrix (nr, nc_)
          "invalid argument #1 or #2 (nrow[,ncol] >=1 or table [of tables] expected)")
   return cmatrix_alloc(nr, nc)
 end
+]]
+
+local function matrix (nr, nc_)
+  local nc = nc_ or nr -- square
+  if is_table(nr) then
+    return fromtable(matrix_alloc, nr)
+  elseif nr > 0 and nc > 0 then
+    return matrix_alloc(nr, nc)
+  else
+    error("invalid argument #1 or #2, nrow[,ncol] or table [of tables] expected")
+  end
+end
+
+local function cmatrix (nr, nc_)
+  local nc = nc_ or nr -- square
+  if is_table(nr) then
+    return fromtable(cmatrix_alloc, nr)
+  elseif nr > 0 and nc > 0 then
+    return cmatrix_alloc(nr, nc)
+  else
+    error("invalid argument #1 or #2, nrow[,ncol] or table [of tables] expected")
+  end
+end
+
 
 local  vector = \n ->  matrix(n, 1)
 local cvector = \n -> cmatrix(n, 1)
