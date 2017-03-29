@@ -189,16 +189,16 @@ local cpx_sz = ffi.sizeof 'complex'
 
 -- types ----------------------------------------------------------------------o
 
---ffi.cdef [[
---typedef struct { ssz_t nr, nc; double  data[?]; }  matrix_t;
---typedef struct { ssz_t nr, nc; complex data[?]; } cmatrix_t;
---]]
+ffi.cdef [[
+typedef struct { ssz_t nr, nc; double  data[?]; }  matrix_t;
+typedef struct { ssz_t nr, nc; complex data[?]; } cmatrix_t;
+]]
 
 --JULY + APRIL
-ffi.cdef [[
-typedef struct  matrix { int32_t nr, nc; double  data[?]; }  matrix_t;
-typedef struct cmatrix { int32_t nr, nc; complex data[?]; } cmatrix_t;
-]]
+--ffi.cdef [[
+--typedef struct  matrix { int32_t nr, nc; double  data[?]; }  matrix_t;
+--typedef struct cmatrix { int32_t nr, nc; complex data[?]; } cmatrix_t;
+--]]
 
 local matrix_ctor  = ffi.typeof 'matrix_t'
 local matrix_cref  = ffi.typeof 'matrix_t&'
@@ -1541,6 +1541,7 @@ end
 -- add (see also kadd)
 
 --TEMP
+--[[
 function MR.rows   (x) return x.nr        end
 function MR.cols   (x) return x.nc        end
 
@@ -1704,8 +1705,8 @@ function MR.__mul (x, y, r_)
 
 ::invalid:: error("invalid matrix (*) operands")
 end
+]]
 
---[[
 function MR.__radd_cpx (y, x, r)                  -- cpx + mat => cpx + vec
   r = chksiz(r,y) or cmatrix(y:sizes())
   _C.mad_vec_addc_r(y.data, x.re, x.im, r.data, r:size()) return r
@@ -1844,7 +1845,7 @@ function MR.__mul (x, y, r)
   end
   error("invalid arguments (unsupported matrix operation)")
 end
-]]
+--]]
 
 function MC.__rmul_cpx (y, x, r)                  -- cpx * cmat => cpx * cvec
   r = chksiz(r,y) or cmatrix(y:sizes())
