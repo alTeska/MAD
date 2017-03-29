@@ -194,7 +194,7 @@ local cpx_sz = ffi.sizeof 'complex'
 --typedef struct { ssz_t nr, nc; complex data[?]; } cmatrix_t;
 --]]
 
-
+--JULY + APRIL
 ffi.cdef [[
 typedef struct  matrix { int32_t nr, nc; double  data[?]; }  matrix_t;
 typedef struct cmatrix { int32_t nr, nc; complex data[?]; } cmatrix_t;
@@ -250,7 +250,7 @@ local function cmatrix_alloc (nr, nc)
   return mat
 end
 ]]
-
+--JULY + APRIL
 local function matrix_alloc (nr, nc)
   local len, mat = nr*nc, nil
   if len < _C.mad_alloc_threshold then
@@ -279,12 +279,6 @@ local function cmatrix_alloc (nr, nc)
   return mat
 end
 
-local function fromtable (ctor, tbl)
-  local nr, nc = #tbl or 0, is_table(tbl[1]) and #tbl[1] or 1
-  assert(nr > 0 and nc > 0, "invalid argument #1 (non-empty table expected)")
-  return ctor(nr,nc):fill(tbl)
-end
-
 -- constructors ---------------------------------------------------------------o
 --[[
 local function matrix (nr, nc_)
@@ -308,6 +302,7 @@ local function cmatrix (nr, nc_)
 end
 ]]
 
+--JULY + APRIL
 local function matrix (nr, nc_)
   local nc = nc_ or nr -- square
   if is_table(nr) then
@@ -329,7 +324,6 @@ local function cmatrix (nr, nc_)
     error("invalid argument #1 or #2, nrow[,ncol] or table [of tables] expected")
   end
 end
-
 
 local  vector = \n ->  matrix(n, 1)
 local cvector = \n -> cmatrix(n, 1)
